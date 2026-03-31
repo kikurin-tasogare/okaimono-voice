@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a6b4a" />
+  <title>買い物リスト（音声）</title>
+  <style>
+    :root {
+      --bg: #f4f6f4;
+      --surface: #fff;
+      --text: #1c1c1c;
+      --muted: #5c6b63;
+      --accent: #1a6b4a;
+      --accent-soft: #e8f2ed;
+      --done: #94a399;
+      --danger: #c45c4a;
+      --radius: 14px;
+      --shadow: 0 2px 12px rgba(26, 107, 74, 0.08);
+      --tap: 48px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .voice-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .voice-btn {
+      width: min(100%, 280px);
+      min-height: var(--tap);
+      padding: 18px 24px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      touch-action: manipulation;
+    }
+
+    .voice-btn:active {
+      transform: scale(0.98);
+    }
+
+    .voice-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .voice-btn.listening {
+      background: var(--danger);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      50% { box-shadow: 0 0 0 8px rgba(196, 92, 74, 0.25); }
+    }
+
+    .mic-icon {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .status {
+      min-height: 1.4em;
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .list-head h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .clear-done {
+      min-height: 36px;
+      padding: 0 12px;
+      font-size: 0.8rem;
+      border: 1px solid #d0d8d3;
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--muted);
+      touch-action: manipulation;
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 56px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    .item:active {
+      background: var(--accent-soft);
+    }
+
+    .check {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .item.done .check {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .check svg {
+      width: 16px;
+      height: 16px;
+      opacity: 0;
+      color: #fff;
+    }
+
+    .item.done .check svg {
+      opacity: 1;
+    }
+
+    .label {
+      flex: 1;
+      font-size: 1.05rem;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .item.done .label {
+      color: var(--done);
+      text-decoration: line-through;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .unsupported {
+      background: #fff8e6;
+      border: 1px solid #e8d4a0;
+      border-radius: var(--radius);
+      padding: 14px;
+      font-size: 0.88rem;
+      color: #6b5a2a;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .unsupported code {
+      font-size: 0.85em;
+      padding: 0.1em 0.35em;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 4px;
+    }
+
+    .unsupported a {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .manual-wrap {
+      margin-bottom: 24px;
+    }
+
+    .manual-label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .manual-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .manual-input {
+      flex: 1;
+      min-width: 0;
+      min-height: var(--tap);
+      padding: 12px 14px;
+      font-size: 16px;
+      border: 1px solid #c8d4cc;
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .manual-input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .manual-btn {
+      min-width: 88px;
+      min-height: var(--tap);
+      padding: 0 18px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      touch-action: manipulation;
+      flex-shrink: 0;
+    }
+
+    .manual-btn:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>買い物リスト</h1>
+    <p class="sub">マイクで話すか、下の欄に文字で入力</p>
+  </header>
+
+  <div id="unsupported" class="unsupported" hidden></div>
+
+  <div class="voice-wrap">
+    <button type="button" id="voiceBtn" class="voice-btn" aria-pressed="false">
+      <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+        <line x1="12" y1="19" x2="12" y2="23" />
+        <line x1="8" y1="23" x2="16" y2="23" />
+      </svg>
+      <span id="voiceLabel">音声で追加</span>
+    </button>
+    <p id="status" class="status" role="status"></p>
+  </div>
+
+  <div class="manual-wrap">
+    <label class="manual-label" for="manualInput">文字で追加</label>
+    <div class="manual-row">
+      <input type="text" id="manualInput" class="manual-input" placeholder="例：牛乳、パン" autocomplete="off" enterkeyhint="done" inputmode="text" />
+      <button type="button" id="manualAdd" class="manual-btn">追加</button>
+    </div>
+  </div>
+
+  <div class="list-head">
+    <h2>リスト</h2>
+    <button type="button" id="clearDone" class="clear-done" hidden>完了を削除</button>
+  </div>
+  <ul id="list" aria-label="買い物リスト"></ul>
+  <p id="empty" class="empty">まだありません。<br />音声ボタンまたは「文字で追加」から入れてください。</p>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = "voice-shopping-list-v1";
+
+      var voiceBtn = document.getElementById("voiceBtn");
+      var voiceLabel = document.getElementById("voiceLabel");
+      var statusEl = document.getElementById("status");
+      var listEl = document.getElementById("list");
+      var emptyEl = document.getElementById("empty");
+      var clearDoneBtn = document.getElementById("clearDone");
+      var unsupportedEl = document.getElementById("unsupported");
+      var manualInput = document.getElementById("manualInput");
+      var manualAdd = document.getElementById("manualAdd");
+
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      var recognition = null;
+      var items = [];
+
+      function load() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) items = JSON.parse(raw);
+          if (!Array.isArray(items)) items = [];
+        } catch (e) {
+          items = [];
+        }
+      }
+
+      function save() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+        } catch (e) {}
+      }
+
+      function splitPhrases(text) {
+        return text
+          .split(/[,、，]+|\s+と\s+/)
+          .map(function (s) { return s.trim(); })
+          .filter(Boolean);
+      }
+
+      function uid() {
+        return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      }
+
+      function render() {
+        listEl.innerHTML = "";
+        var hasDone = false;
+        items.forEach(function (item) {
+          if (item.done) hasDone = true;
+          var li = document.createElement("li");
+          li.className = "item" + (item.done ? " done" : "");
+          li.dataset.id = item.id;
+          li.setAttribute("role", "button");
+          li.setAttribute("tabindex", "0");
+          li.innerHTML =
+            '<span class="check" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>' +
+            '<span class="label"></span>';
+          li.querySelector(".label").textContent = item.text;
+          li.addEventListener("click", function () { toggle(item.id); });
+          li.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggle(item.id);
+            }
+          });
+          listEl.appendChild(li);
+        });
+        emptyEl.hidden = items.length > 0;
+        clearDoneBtn.hidden = !hasDone;
+      }
+
+      function toggle(id) {
+        items = items.map(function (i) {
+          if (i.id === id) return { id: i.id, text: i.text, done: !i.done };
+          return i;
+        });
+        save();
+        render();
+      }
+
+      function addFromText(text) {
+        var parts = splitPhrases(text);
+        if (parts.length === 0) return;
+        parts.forEach(function (p) {
+          items.push({ id: uid(), text: p, done: false });
+        });
+        save();
+        render();
+        statusEl.textContent = parts.length + "件追加しました";
+        statusEl.classList.remove("error");
+        manualInput.value = "";
+      }
+
+      function submitManual() {
+        var t = manualInput.value.trim();
+        if (!t) {
+          statusEl.textContent = "品名を入力してください";
+          statusEl.classList.add("error");
+          return;
+        }
+        addFromText(t);
+      }
+
+      function setListening(on) {
+        voiceBtn.classList.toggle("listening", on);
+        voiceBtn.setAttribute("aria-pressed", on ? "true" : "false");
+        voiceLabel.textContent = on ? "聞いています…（タップで停止）" : "音声で追加";
+      }
+
+      function initRecognition() {
+        if (!SpeechRecognition) return false;
+        recognition = new SpeechRecognition();
+        recognition.lang = "ja-JP";
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = function () {
+          setListening(true);
+          statusEl.textContent = "話してください";
+          statusEl.classList.remove("error");
+        };
+
+        recognition.onend = function () {
+          setListening(false);
+        };
+
+        recognition.onerror = function (e) {
+          setListening(false);
+          if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+            statusEl.textContent = "マイクの許可が必要です。ブラウザの設定を確認してください。";
+          } else if (e.error === "no-speech") {
+            statusEl.textContent = "声が聞き取れませんでした。もう一度お試しください。";
+          } else if (e.error === "aborted") {
+            statusEl.textContent = "";
+          } else {
+            statusEl.textContent = "音声認識エラー: " + e.error;
+          }
+          statusEl.classList.add("error");
+        };
+
+        recognition.onresult = function (e) {
+          var transcript = "";
+          for (var i = e.resultIndex; i < e.results.length; i++) {
+            transcript += e.results[i][0].transcript;
+          }
+          transcript = transcript.trim();
+          if (transcript) addFromText(transcript);
+          else {
+            statusEl.textContent = "内容が空でした";
+            statusEl.classList.add("error");
+          }
+        };
+
+        return true;
+      }
+
+      voiceBtn.addEventListener("click", function () {
+        if (!recognition) {
+          statusEl.textContent = "このブラウザでは音声入力に対応していません。";
+          statusEl.classList.add("error");
+          return;
+        }
+        if (voiceBtn.classList.contains("listening")) {
+          try { recognition.stop(); } catch (err) {}
+          statusEl.textContent = "停止しました";
+          return;
+        }
+        try {
+          recognition.start();
+        } catch (err) {
+          statusEl.textContent = "もう一度タップしてください";
+          statusEl.classList.add("error");
+        }
+      });
+
+      clearDoneBtn.addEventListener("click", function () {
+        items = items.filter(function (i) { return !i.done; });
+        save();
+        render();
+        statusEl.textContent = "完了した項目を削除しました";
+        statusEl.classList.remove("error");
+      });
+
+      manualAdd.addEventListener("click", submitManual);
+      manualInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          submitManual();
+        }
+      });
+
+      load();
+      render();
+
+      if (!initRecognition()) {
+        unsupportedEl.hidden = false;
+        unsupportedEl.innerHTML =
+          "<strong>音声が使えない理由（iPhone でよくある）</strong><br />" +
+          "家の Wi-Fi の <code>http://192.168…</code> のように開いていると、ブラウザが「安全なページ」とみなさず、マイク・音声認識が無効になります。<br /><br />" +
+          "<strong>今すぐ使う：</strong> 下の「文字で追加」に品名を入れて「追加」を押してください（読点「、」で複数まとめて追加できます）。<br /><br />" +
+          "<strong>音声も試す：</strong> Mac で <a href=\"https://ngrok.com/\" target=\"_blank\" rel=\"noopener\">ngrok</a> などで HTTPS の URL を作り、その URL を iPhone で開くと、環境によっては音声が使えることがあります。Android の Chrome では、同じ Wi-Fi の <code>http://…</code> でも音声が動くことが多いです。";
+        voiceBtn.disabled = true;
+        voiceLabel.textContent = "非対応";
+      }
+    })();
+  </script>
+</body>
+</html>
