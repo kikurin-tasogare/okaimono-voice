@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#1a6b4a" />
+  <meta name="theme-color" content="#4db6c8" />
   <title>買い物リスト（音声）</title>
   <style>
     :root {
@@ -11,12 +11,14 @@
       --surface: #fff;
       --text: #1c1c1c;
       --muted: #5c6b63;
-      --accent: #1a6b4a;
-      --accent-soft: #e8f2ed;
+      --accent: #4db6c8;
+      --accent-dark: #3a9fb3;
+      --accent-soft: #e8f4f7;
       --done: #94a399;
       --danger: #c45c4a;
       --radius: 14px;
-      --shadow: 0 2px 12px rgba(26, 107, 74, 0.08);
+      --shadow: 0 2px 12px rgba(77, 182, 200, 0.12);
+      --btn-shadow: 0 2px 14px rgba(77, 182, 200, 0.35);
       --tap: 48px;
     }
 
@@ -81,7 +83,7 @@
       font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: var(--shadow);
+      box-shadow: var(--btn-shadow);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -91,6 +93,7 @@
 
     .voice-btn:active {
       transform: scale(0.98);
+      background: var(--accent-dark);
     }
 
     .voice-btn:disabled {
@@ -102,6 +105,11 @@
     .voice-btn.listening {
       background: var(--danger);
       animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .voice-wrap-manual {
+      margin-top: 4px;
+      margin-bottom: 16px;
     }
 
     @keyframes pulse {
@@ -152,10 +160,10 @@
       min-height: 36px;
       padding: 0 12px;
       font-size: 0.8rem;
-      border: 1px solid #d0d8d3;
+      border: 1px solid rgba(77, 182, 200, 0.45);
       border-radius: 10px;
       background: var(--surface);
-      color: var(--muted);
+      color: var(--accent-dark);
       touch-action: manipulation;
     }
 
@@ -269,14 +277,11 @@
     }
 
     .manual-row {
-      display: flex;
-      gap: 10px;
-      align-items: stretch;
+      display: block;
     }
 
     .manual-input {
-      flex: 1;
-      min-width: 0;
+      width: 100%;
       min-height: var(--tap);
       padding: 12px 14px;
       font-size: 16px;
@@ -289,24 +294,6 @@
     .manual-input:focus {
       outline: 2px solid var(--accent);
       outline-offset: 2px;
-    }
-
-    .manual-btn {
-      min-width: 88px;
-      min-height: var(--tap);
-      padding: 0 18px;
-      border: none;
-      border-radius: var(--radius);
-      background: var(--accent);
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
-      touch-action: manipulation;
-      flex-shrink: 0;
-    }
-
-    .manual-btn:active {
-      transform: scale(0.98);
     }
 
     .place-wrap {
@@ -401,7 +388,7 @@
   <div id="unsupported" class="unsupported" hidden></div>
 
   <div class="voice-wrap">
-    <button type="button" id="voiceBtn" class="voice-btn" aria-pressed="false">
+    <button type="button" id="voiceBtn" class="voice-btn" aria-pressed="false" aria-describedby="status">
       <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
         <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -410,7 +397,7 @@
       </svg>
       <span id="voiceLabel">音声で追加</span>
     </button>
-    <p id="status" class="status" role="status"></p>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
   </div>
 
   <div class="place-wrap">
@@ -418,11 +405,22 @@
     <input type="text" id="placeInput" class="place-input" placeholder="例：スーパー、100円均一、ドラッグストア" autocomplete="on" enterkeyhint="next" inputmode="text" />
   </div>
 
+  <div class="voice-wrap voice-wrap-manual">
+    <button type="button" id="voiceBtn2" class="voice-btn" aria-pressed="false" aria-describedby="status">
+      <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+        <line x1="12" y1="19" x2="12" y2="23" />
+        <line x1="8" y1="23" x2="16" y2="23" />
+      </svg>
+      <span id="voiceLabel2">音声で追加</span>
+    </button>
+  </div>
+
   <div class="manual-wrap">
     <label class="manual-label" for="manualInput">文字で追加</label>
     <div class="manual-row">
-      <input type="text" id="manualInput" class="manual-input" placeholder="例：牛乳、パン" autocomplete="off" enterkeyhint="done" inputmode="text" />
-      <button type="button" id="manualAdd" class="manual-btn">追加</button>
+      <input type="text" id="manualInput" class="manual-input" placeholder="例：牛乳、パン（入力後は「音声で追加」で追加）" autocomplete="off" enterkeyhint="done" inputmode="text" />
     </div>
   </div>
 
@@ -431,7 +429,7 @@
     <button type="button" id="clearDone" class="clear-done" hidden>完了を削除</button>
   </div>
   <div id="listRoot" aria-label="買い物リスト（場所別）"></div>
-  <p id="empty" class="empty">まだありません。<br />上の「音声で追加」で先に店名を話すか、「追加する場所」に入力してから、品名を音声または「文字で追加」で入れてください。</p>
+  <p id="empty" class="empty">まだありません。<br />「音声で追加」で店名を話すか「追加する場所」に入力し、品名は話すか文字で入れてから、同じ「音声で追加」ボタンで追加してください。</p>
 
   <script>
     (function () {
@@ -443,20 +441,28 @@
 
       var voiceBtn = document.getElementById("voiceBtn");
       var voiceLabel = document.getElementById("voiceLabel");
+      var voiceBtn2 = document.getElementById("voiceBtn2");
+      var voiceLabel2 = document.getElementById("voiceLabel2");
       var statusEl = document.getElementById("status");
       var listRoot = document.getElementById("listRoot");
       var emptyEl = document.getElementById("empty");
       var clearDoneBtn = document.getElementById("clearDone");
       var unsupportedEl = document.getElementById("unsupported");
       var manualInput = document.getElementById("manualInput");
-      var manualAdd = document.getElementById("manualAdd");
       var placeInput = document.getElementById("placeInput");
 
       var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       var recognition = null;
       /** 次の認識結果を「追加する場所」に入れるモード（場所未入力で音声ボタンを押したとき） */
       var voiceCapturingPlace = false;
+      /** いま聞き取り中の「音声で追加」ボタン（押した側だけ listening 表示） */
+      var voiceSessionBtn = null;
       var items = [];
+
+      function setStatus(text, isError) {
+        statusEl.textContent = text;
+        statusEl.classList.toggle("error", !!isError);
+      }
 
       function placeFromItem(i) {
         if (i.place && String(i.place).trim()) return String(i.place).trim();
@@ -638,8 +644,7 @@
       function ensurePlaceForAdd() {
         var place = getActivePlace();
         if (!place) {
-          statusEl.textContent = "「追加する場所」を先に入力してください";
-          statusEl.classList.add("error");
+          setStatus("「追加する場所」を先に入力してください", true);
           placeInput.focus();
           return "";
         }
@@ -656,25 +661,39 @@
         });
         save();
         render();
-        statusEl.textContent = "「" + place + "」に" + parts.length + "件追加しました";
-        statusEl.classList.remove("error");
+        setStatus("「" + place + "」に" + parts.length + "件追加しました", false);
         manualInput.value = "";
       }
 
       function submitManual() {
         var t = manualInput.value.trim();
         if (!t) {
-          statusEl.textContent = "品名を入力してください";
-          statusEl.classList.add("error");
+          setStatus("品名を入力してください", true);
           return;
         }
         addFromText(t);
       }
 
       function setListening(on) {
-        voiceBtn.classList.toggle("listening", on);
-        voiceBtn.setAttribute("aria-pressed", on ? "true" : "false");
-        voiceLabel.textContent = on ? "聞いています…（タップで停止）" : "音声で追加";
+        if (!on) {
+          voiceBtn.classList.remove("listening");
+          voiceBtn2.classList.remove("listening");
+          voiceBtn.setAttribute("aria-pressed", "false");
+          voiceBtn2.setAttribute("aria-pressed", "false");
+          voiceLabel.textContent = "音声で追加";
+          voiceLabel2.textContent = "音声で追加";
+          voiceSessionBtn = null;
+          return;
+        }
+        var b = voiceSessionBtn;
+        if (!b) return;
+        voiceBtn.classList.toggle("listening", b === voiceBtn);
+        voiceBtn2.classList.toggle("listening", b === voiceBtn2);
+        voiceBtn.setAttribute("aria-pressed", b === voiceBtn ? "true" : "false");
+        voiceBtn2.setAttribute("aria-pressed", b === voiceBtn2 ? "true" : "false");
+        var lab = "聞いています…（タップで停止）";
+        voiceLabel.textContent = b === voiceBtn ? lab : "音声で追加";
+        voiceLabel2.textContent = b === voiceBtn2 ? lab : "音声で追加";
       }
 
       function initRecognition() {
@@ -688,12 +707,11 @@
         recognition.onstart = function () {
           setListening(true);
           if (voiceCapturingPlace) {
-            statusEl.textContent = "追加する場所の店名を話してください";
+            setStatus("追加する場所の店名を話してください", false);
           } else {
             var p = getActivePlace();
-            statusEl.textContent = "「" + p + "」に入れる品を話してください";
+            setStatus("「" + p + "」に入れる品を話してください", false);
           }
-          statusEl.classList.remove("error");
         };
 
         recognition.onend = function () {
@@ -703,15 +721,17 @@
         recognition.onerror = function (e) {
           setListening(false);
           if (e.error === "not-allowed" || e.error === "service-not-allowed") {
-            statusEl.textContent = "マイクの許可が必要です。ブラウザの設定を確認してください。";
+            setStatus("マイクの許可が必要です。ブラウザの設定を確認してください。", true);
           } else if (e.error === "no-speech") {
-            statusEl.textContent = "声が聞き取れませんでした。もう一度お試しください。";
+            setStatus(
+              "声が聞き取れませんでした。マイク許可・入力デバイス・ミュート解除を確認し、もう一度お試しください。（Mac は Chrome や入力音量が効くことがあります）",
+              true
+            );
           } else if (e.error === "aborted") {
-            statusEl.textContent = "";
+            setStatus("", false);
           } else {
-            statusEl.textContent = "音声認識エラー: " + e.error;
+            setStatus("音声認識エラー: " + e.error, true);
           }
-          statusEl.classList.add("error");
         };
 
         recognition.onresult = function (e) {
@@ -721,8 +741,7 @@
           }
           transcript = transcript.trim();
           if (!transcript) {
-            statusEl.textContent = "内容が空でした";
-            statusEl.classList.add("error");
+            setStatus("内容が空でした", true);
             return;
           }
           if (voiceCapturingPlace) {
@@ -731,8 +750,7 @@
             try {
               localStorage.setItem(ACTIVE_PLACE_KEY, placeInput.value);
             } catch (err) {}
-            statusEl.textContent = "「" + transcript + "」を追加する場所に入れました。品名を話すか、文字で追加してください。";
-            statusEl.classList.remove("error");
+            setStatus("「" + transcript + "」を追加する場所に入れました。品名を話すか入力し、「音声で追加」で追加してください。", false);
             return;
           }
           addFromText(transcript);
@@ -741,43 +759,54 @@
         return true;
       }
 
-      voiceBtn.addEventListener("click", function () {
-        if (!recognition) {
-          statusEl.textContent = "このブラウザでは音声入力に対応していません。";
-          statusEl.classList.add("error");
+      function handleVoiceClick(ev) {
+        var clicked = ev.currentTarget;
+        var anyListening =
+          voiceBtn.classList.contains("listening") || voiceBtn2.classList.contains("listening");
+        if (anyListening) {
+          if (recognition) {
+            try { recognition.stop(); } catch (err) {}
+            setStatus("停止しました", false);
+          }
+          setListening(false);
           return;
         }
-        if (voiceBtn.classList.contains("listening")) {
-          try { recognition.stop(); } catch (err) {}
-          statusEl.textContent = "停止しました";
+        var typed = manualInput.value.trim();
+        if (typed) {
+          submitManual();
+          return;
+        }
+        if (!recognition) {
+          setStatus("このブラウザでは音声は使えません。「文字で追加」に品名を入れてから「音声で追加」を押すと追加されます。", true);
           return;
         }
         voiceCapturingPlace = !getActivePlace();
         if (voiceCapturingPlace) {
-          statusEl.textContent = "店名を認識します。話し始めてください…";
-          statusEl.classList.remove("error");
+          setStatus("店名を認識します。話し始めてください…", false);
         } else {
-          statusEl.textContent = "「" + getActivePlace() + "」に追加します。話し始めてください…";
-          statusEl.classList.remove("error");
+          setStatus("「" + getActivePlace() + "」に追加します。話し始めてください…", false);
         }
+        voiceSessionBtn = clicked;
         try {
           recognition.start();
         } catch (err) {
           voiceCapturingPlace = false;
-          statusEl.textContent = "もう一度タップしてください";
-          statusEl.classList.add("error");
+          voiceSessionBtn = null;
+          setListening(false);
+          setStatus("もう一度タップしてください", true);
         }
-      });
+      }
+
+      voiceBtn.addEventListener("click", handleVoiceClick);
+      voiceBtn2.addEventListener("click", handleVoiceClick);
 
       clearDoneBtn.addEventListener("click", function () {
         items = items.filter(function (i) { return !i.done; });
         save();
         render();
-        statusEl.textContent = "完了した項目を削除しました";
-        statusEl.classList.remove("error");
+        setStatus("完了した項目を削除しました", false);
       });
 
-      manualAdd.addEventListener("click", submitManual);
       manualInput.addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -799,10 +828,10 @@
         unsupportedEl.innerHTML =
           "<strong>音声が使えない理由（iPhone でよくある）</strong><br />" +
           "家の Wi-Fi の <code>http://192.168…</code> のように開いていると、ブラウザが「安全なページ」とみなさず、マイク・音声認識が無効になります。<br /><br />" +
-          "<strong>今すぐ使う：</strong> 「追加する場所」にキーボードで入力するか、「音声で追加」で店名を話してから、「文字で追加」に品名を入れて「追加」を押してください（読点「、」で複数まとめて追加できます）。<br /><br />" +
+          "<strong>今すぐ使う：</strong> 「追加する場所」にキーボードで入力するか、「音声で追加」で店名を話してから、「文字で追加」に品名を入れ、もう一度「音声で追加」を押してください（読点「、」で複数まとめて追加できます）。<br /><br />" +
           "<strong>音声も試す：</strong> Mac で <a href=\"https://ngrok.com/\" target=\"_blank\" rel=\"noopener\">ngrok</a> などで HTTPS の URL を作り、その URL を iPhone で開くと、環境によっては音声が使えることがあります。Android の Chrome では、同じ Wi-Fi の <code>http://…</code> でも音声が動くことが多いです。";
-        voiceBtn.disabled = true;
-        voiceLabel.textContent = "非対応";
+        voiceLabel.textContent = "音声で追加";
+        voiceLabel2.textContent = "音声で追加";
       }
     })();
   </script>
