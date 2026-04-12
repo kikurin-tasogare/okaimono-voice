@@ -1,4 +1,11 @@
 <!DOCTYPE html>
+<!-- ntfy 通知テスト用コメント（削除してOK） -->
+<!-- 通知フック再テスト 2026-04-12 -->
+<!-- カーくん追記コメント -->
+<!-- フック通知確認用 1行 -->
+<!-- hook test ping -->
+<!-- notify hook try 2026-04-12b -->
+<!-- postToolUse 即時送信テスト -->
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
@@ -127,6 +134,7 @@
       font-size: 0.9rem;
       color: var(--muted);
       text-align: center;
+      margin: 0 0 18px;
     }
 
     .status.error {
@@ -186,6 +194,8 @@
       cursor: pointer;
       touch-action: manipulation;
       user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     .item:active {
@@ -230,6 +240,28 @@
     .item.done .label {
       color: var(--done);
       text-decoration: line-through;
+    }
+
+    .item-edit {
+      flex-shrink: 0;
+      min-width: 48px;
+      min-height: 44px;
+      padding: 0 8px;
+      margin: -8px -6px -8px 0;
+      border: none;
+      background: transparent;
+      color: var(--accent-dark);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      border-radius: 10px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .item-edit:active {
+      background: var(--accent-soft);
     }
 
     .empty {
@@ -297,7 +329,53 @@
     }
 
     .place-wrap {
-      margin-bottom: 20px;
+      margin-bottom: 12px;
+    }
+
+    .place-hint {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin: -2px 0 10px;
+      line-height: 1.45;
+    }
+
+    .place-voice-row {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .place-voice-row .place-input {
+      flex: 1;
+      min-width: 0;
+      width: auto;
+    }
+
+    .voice-btn-scene {
+      width: auto;
+      min-width: 100px;
+      max-width: 118px;
+      flex-shrink: 0;
+      flex-direction: column;
+      padding: 10px 8px;
+      gap: 6px;
+      font-size: 0.72rem;
+      line-height: 1.2;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .voice-btn-scene .mic-icon {
+      width: 22px;
+      height: 22px;
+    }
+
+    .voice-btn-scene-label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.25;
     }
 
     .place-input {
@@ -309,6 +387,9 @@
       border-radius: var(--radius);
       background: var(--surface);
       box-shadow: var(--shadow);
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     .place-input:focus {
@@ -372,6 +453,9 @@
       word-break: break-word;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     .place-title-btn:active {
@@ -483,38 +567,55 @@
 <body>
   <header>
     <h1>やりたいことリスト</h1>
-    <p class="sub">「シーン」を決めてから、内容を音声か文字で追加。リストのシーン名をタップすると、そのシーンに切り替わります。</p>
+    <p class="sub">「やりたいことや場所」は<strong>タップで音声入れ替え</strong>（横のマイクでも下の「音声で追加」でも可）。買う物を<strong>音声だけで足す</strong>ときは下を<strong>長押し</strong>。文字なら「文字で追加」から。</p>
   </header>
 
   <div id="unsupported" class="unsupported" hidden></div>
 
-  <div class="voice-wrap">
-    <button type="button" id="voiceBtn" class="voice-btn" aria-pressed="false" aria-describedby="status">
-      <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-        <line x1="12" y1="19" x2="12" y2="23" />
-        <line x1="8" y1="23" x2="16" y2="23" />
-      </svg>
-      <span id="voiceLabel">音声で追加</span>
-    </button>
-    <p id="status" class="status" role="status" aria-live="polite"></p>
+  <div class="place-wrap">
+    <label class="manual-label" for="placeInput">やりたいことや場所</label>
+    <p class="place-hint">
+      <strong>タップ</strong>（横のマイク／下の「音声で追加」）→ 場所がいったん空き、話した言葉で<strong>上書き</strong>（リストのまとまりも一緒に移ります）。<strong>長押し</strong>下のマイクだけ、その場所に買う物を音声で足せます。
+    </p>
+    <div class="place-voice-row">
+      <input type="text" id="placeInput" class="place-input" placeholder="" autocomplete="on" enterkeyhint="next" inputmode="text" />
+      <button
+        type="button"
+        id="voiceBtn"
+        class="voice-btn voice-btn-scene"
+        aria-pressed="false"
+        aria-describedby="status"
+        aria-label="やりたいことや場所を音声で入れ替え（いったん欄を空にしてから聞き取ります）"
+      >
+        <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+          <line x1="12" y1="19" x2="12" y2="23" />
+          <line x1="8" y1="23" x2="16" y2="23" />
+        </svg>
+        <span id="voiceLabel" class="voice-btn-scene-label">シーンを音声</span>
+      </button>
+    </div>
   </div>
 
-  <div class="place-wrap">
-    <label class="manual-label" for="placeInput">シーン</label>
-    <input type="text" id="placeInput" class="place-input" placeholder="" autocomplete="on" enterkeyhint="next" inputmode="text" />
-  </div>
+  <p id="status" class="status" role="status" aria-live="polite"></p>
 
   <div class="voice-wrap voice-wrap-manual">
-    <button type="button" id="voiceBtn2" class="voice-btn" aria-pressed="false" aria-describedby="status">
+    <button
+      type="button"
+      id="voiceBtn2"
+      class="voice-btn"
+      aria-pressed="false"
+      aria-describedby="status"
+      aria-label="タップでやりたいことや場所を音声で入れ替え。長押しでその場所に買う物を音声追加。"
+    >
       <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
         <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
         <line x1="12" y1="19" x2="12" y2="23" />
         <line x1="8" y1="23" x2="16" y2="23" />
       </svg>
-      <span id="voiceLabel2">音声で追加</span>
+      <span id="voiceLabel2">タップ:場所／長押し:追加</span>
     </button>
   </div>
 
@@ -526,11 +627,11 @@
   </div>
 
   <div class="list-head">
-    <h2>リスト<span class="list-hint">（左の矢印で開閉・シーン名タップで切り替え・項目は長押しで編集）</span></h2>
+    <h2>リスト<span class="list-hint">（左の矢印で開閉・見出しタップで切り替え・項目の「編集」で文言変更）</span></h2>
     <button type="button" id="clearDone" class="clear-done" hidden>完了を削除</button>
   </div>
-  <div id="listRoot" aria-label="やりたいことリスト（シーン別）"></div>
-  <p id="empty" class="empty">まだありません。<br />上で「シーン」を入れるか、音声でシーンを話してから、やることを話すか「文字で追加」に入れて「音声で追加」で足してください。</p>
+  <div id="listRoot" aria-label="やりたいことリスト（やりたいこと・場所別）"></div>
+  <p id="empty" class="empty">まだありません。<br />「やりたいことや場所」は入力かタップで音声。やることは「文字で追加」か、下のマイクを<strong>長押し</strong>して音声で足してください。</p>
 
   <div id="editOverlay" class="edit-overlay" hidden role="presentation">
     <div class="edit-dialog" role="dialog" aria-modal="true" aria-labelledby="editDialogLabel">
@@ -548,9 +649,10 @@
       var STORAGE_KEY = "voice-shopping-list-v1";
       var ACTIVE_PLACE_KEY = "voice-shopping-list-active-place";
       var COLLAPSED_KEY = "voice-shopping-collapsed-places-v1";
-      /** 未分類シーンの表示名（旧データの「（場所未設定）」は読み込み時にここへ寄せる） */
-      var UNSET_PLACE = "（シーン未設定）";
+      /** 未分類の表示名（旧ラベルは読み込み時にここへ寄せる） */
+      var UNSET_PLACE = "（やりたいこと・場所未設定）";
       var OLD_UNSET_PLACE = "（場所未設定）";
+      var OLD_SCENE_UNSET = "（シーン未設定）";
 
       var collapsedPlaces = {};
 
@@ -572,14 +674,36 @@
 
       var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       var recognition = null;
-      /** 次の認識結果を「シーン」に入れるモード（シーン未入力で音声ボタンを押したとき） */
+      /** 次の認識結果を「やりたいことや場所」欄に入れるモード */
       var voiceCapturingPlace = false;
+      /** 「やりたいことや場所」横マイク開始時に戻すための退避 */
+      var pendingPlaceRestore = null;
+      /** onend が先に来て pending が消えても、場所の書き換え元を onresult で使えるよう退避 */
+      var sceneVoiceOldPlace = null;
+      /** onend で voiceCapturingPlace が先に落ちても結果の扱いを固定する: scene-replace | place-capture | item-add */
+      var voiceSessionIntent = null;
+      var topSceneVoiceSession = false;
+      /** iOS 等で onend が onresult より先に来るとき、場所取り込みが項目追加に化けないよう結果適用済みかを見る */
+      var sceneVoiceReplaceCommitted = false;
+      var sceneVoiceReplaceRestoreTimer = null;
+      var bottomVoiceLongPressTimer = null;
+      var bottomVoiceLongPressFired = false;
+      var bottomVoicePointerDownAt = 0;
+      var BOTTOM_VOICE_LONGPRESS_MS = 560;
+      var suppressVoiceBtn2Click = false;
+      var voice2TouchStartT = 0;
+      var voice2TouchLongDone = false;
+      var voice2TouchStartX = 0;
+      var voice2TouchStartY = 0;
+      var voice2MoveCanceled = false;
       /** いま聞き取り中の「音声で追加」ボタン（押した側だけ listening 表示） */
       var voiceSessionBtn = null;
       var items = [];
       var statusClearTimer = null;
       var suppressToggleUntil = 0;
-      var longPressDelay = 550;
+      /** iOS は微小な touchmove でキャンセルされやすいので、移動閾値と少し長めの待ちを使う */
+      var longPressDelay = 620;
+      var longPressMoveThresholdPx = 14;
       var editingItemId = null;
 
       function setStatus(text, isError, clearAfterMs) {
@@ -600,7 +724,7 @@
 
       function normalizePlace(name) {
         var s = String(name || "").trim();
-        if (!s || s === OLD_UNSET_PLACE) return UNSET_PLACE;
+        if (!s || s === OLD_UNSET_PLACE || s === OLD_SCENE_UNSET) return UNSET_PLACE;
         return s;
       }
 
@@ -653,6 +777,13 @@
               collapsedPlaces[UNSET_PLACE] = collapsedPlaces[OLD_UNSET_PLACE];
               delete collapsedPlaces[OLD_UNSET_PLACE];
             }
+            if (
+              collapsedPlaces[OLD_SCENE_UNSET] !== undefined &&
+              collapsedPlaces[UNSET_PLACE] === undefined
+            ) {
+              collapsedPlaces[UNSET_PLACE] = collapsedPlaces[OLD_SCENE_UNSET];
+              delete collapsedPlaces[OLD_SCENE_UNSET];
+            }
           } else collapsedPlaces = {};
         } catch (e3) {
           collapsedPlaces = {};
@@ -674,6 +805,22 @@
 
       function getActivePlace() {
         return placeInput.value.trim();
+      }
+
+      function migrateItemsPlace(oldP, newP) {
+        oldP = String(oldP || "").trim();
+        newP = String(newP || "").trim();
+        if (!newP || !oldP || oldP === newP) return;
+        items = items.map(function (i) {
+          var ip = (i.place || "").trim();
+          if (ip === oldP) return { id: i.id, text: i.text, done: i.done, place: newP };
+          return i;
+        });
+        if (collapsedPlaces[oldP] !== undefined) {
+          collapsedPlaces[newP] = collapsedPlaces[oldP];
+          delete collapsedPlaces[oldP];
+          saveCollapsed();
+        }
       }
 
       function placesInOrder() {
@@ -735,16 +882,33 @@
         var li = document.createElement("li");
         li.className = "item" + (item.done ? " done" : "");
         li.dataset.id = item.id;
-        li.setAttribute("role", "button");
-        li.setAttribute("tabindex", "0");
-        li.setAttribute("title", "長押しで編集");
+        li.setAttribute("role", "group");
+        li.setAttribute("aria-label", item.text);
+        li.setAttribute("title", "タップで完了／右の編集で文言を変える");
         li.innerHTML =
           '<span class="check" aria-hidden="true">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>' +
-          '<span class="label"></span>';
+          '<span class="label"></span>' +
+          '<button type="button" class="item-edit" aria-label="この項目を編集">編集</button>';
         li.querySelector(".label").textContent = item.text;
 
+        var editBtn = li.querySelector(".item-edit");
+        editBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          openEditItem(item);
+        });
+        editBtn.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            openEditItem(item);
+          }
+        });
+
         var pressTimer = null;
+        var pressStartX = 0;
+        var pressStartY = 0;
         function cancelPress() {
           if (pressTimer) {
             clearTimeout(pressTimer);
@@ -760,12 +924,39 @@
           }, longPressDelay);
         }
 
-        li.addEventListener("touchstart", function () {
-          startPress();
-        }, { passive: true });
-        li.addEventListener("touchmove", cancelPress);
+        li.addEventListener(
+          "touchstart",
+          function (e) {
+            if (e.touches.length !== 1) return;
+            pressStartX = e.touches[0].clientX;
+            pressStartY = e.touches[0].clientY;
+            startPress();
+          },
+          { passive: true }
+        );
+        li.addEventListener(
+          "touchmove",
+          function (e) {
+            if (!pressTimer || e.touches.length !== 1) return;
+            var x = e.touches[0].clientX;
+            var y = e.touches[0].clientY;
+            var dx = x - pressStartX;
+            var dy = y - pressStartY;
+            if (dx * dx + dy * dy > longPressMoveThresholdPx * longPressMoveThresholdPx) {
+              cancelPress();
+            }
+          },
+          { passive: true }
+        );
         li.addEventListener("touchend", cancelPress);
         li.addEventListener("touchcancel", cancelPress);
+
+        li.addEventListener("contextmenu", function (e) {
+          e.preventDefault();
+          cancelPress();
+          suppressToggleUntil = Date.now() + 700;
+          openEditItem(item);
+        });
 
         li.addEventListener("mousedown", function (e) {
           if (e.button !== 0) return;
@@ -781,12 +972,6 @@
             return;
           }
           toggle(item.id);
-        });
-        li.addEventListener("keydown", function (e) {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            toggle(item.id);
-          }
         });
         ul.appendChild(li);
       }
@@ -841,7 +1026,10 @@
           titleBtn.type = "button";
           titleBtn.className = "place-title-btn";
           titleBtn.textContent = placeName;
-          titleBtn.setAttribute("aria-label", "シーンを「" + placeName + "」に切り替え");
+          titleBtn.setAttribute(
+            "aria-label",
+            "やりたいことや場所を「" + placeName + "」に切り替え"
+          );
           titleBtn.addEventListener("click", function () {
             placeInput.value = placeName;
             try {
@@ -881,7 +1069,7 @@
       function ensurePlaceForAdd() {
         var place = getActivePlace();
         if (!place) {
-          setStatus("「シーン」を先に入力してください", true);
+          setStatus("「やりたいことや場所」を先に入力してください", true);
           placeInput.focus();
           return "";
         }
@@ -917,8 +1105,8 @@
           voiceBtn2.classList.remove("listening");
           voiceBtn.setAttribute("aria-pressed", "false");
           voiceBtn2.setAttribute("aria-pressed", "false");
-          voiceLabel.textContent = "音声で追加";
-          voiceLabel2.textContent = "音声で追加";
+          voiceLabel.textContent = "シーンを音声";
+          voiceLabel2.textContent = "タップ:場所／長押し:追加";
           voiceSessionBtn = null;
           return;
         }
@@ -929,8 +1117,8 @@
         voiceBtn.setAttribute("aria-pressed", b === voiceBtn ? "true" : "false");
         voiceBtn2.setAttribute("aria-pressed", b === voiceBtn2 ? "true" : "false");
         var lab = "聞いています…（タップで停止）";
-        voiceLabel.textContent = b === voiceBtn ? lab : "音声で追加";
-        voiceLabel2.textContent = b === voiceBtn2 ? lab : "音声で追加";
+        voiceLabel.textContent = b === voiceBtn ? lab : "シーンを音声";
+        voiceLabel2.textContent = b === voiceBtn2 ? lab : "タップ:場所／長押し:追加";
       }
 
       function initRecognition() {
@@ -944,7 +1132,7 @@
         recognition.onstart = function () {
           setListening(true);
           if (voiceCapturingPlace) {
-            setStatus("シーン名を話してください", false);
+            setStatus("「やりたいことや場所」を話してください", false);
           } else {
             var p = getActivePlace();
             setStatus("「" + p + "」に入れる内容を話してください", false);
@@ -952,7 +1140,36 @@
         };
 
         recognition.onend = function () {
-          setListening(false);
+          var wasTopSceneReplace =
+            topSceneVoiceSession && pendingPlaceRestore !== null;
+          var savedRestore = pendingPlaceRestore;
+
+          topSceneVoiceSession = false;
+          pendingPlaceRestore = null;
+
+          if (wasTopSceneReplace) {
+            setListening(false);
+            if (sceneVoiceReplaceRestoreTimer) {
+              clearTimeout(sceneVoiceReplaceRestoreTimer);
+              sceneVoiceReplaceRestoreTimer = null;
+            }
+            sceneVoiceReplaceRestoreTimer = setTimeout(function () {
+              sceneVoiceReplaceRestoreTimer = null;
+              if (!sceneVoiceReplaceCommitted) {
+                placeInput.value = savedRestore;
+                try {
+                  localStorage.setItem(ACTIVE_PLACE_KEY, placeInput.value);
+                } catch (e0) {}
+              }
+              sceneVoiceReplaceCommitted = false;
+              voiceCapturingPlace = false;
+              sceneVoiceOldPlace = null;
+              voiceSessionIntent = null;
+            }, 280);
+          } else {
+            voiceCapturingPlace = false;
+            setListening(false);
+          }
         };
 
         recognition.onerror = function (e) {
@@ -981,37 +1198,200 @@
             setStatus("内容が空でした", true);
             return;
           }
-          if (voiceCapturingPlace) {
+          var intent = voiceSessionIntent;
+          var ttrim = transcript.trim();
+
+          if (intent === "scene-replace") {
+            sceneVoiceReplaceCommitted = true;
+            var renameFrom =
+              sceneVoiceOldPlace !== null && sceneVoiceOldPlace !== undefined
+                ? String(sceneVoiceOldPlace).trim()
+                : "";
+            sceneVoiceOldPlace = null;
+            voiceSessionIntent = null;
             voiceCapturingPlace = false;
-            placeInput.value = transcript;
+            pendingPlaceRestore = null;
+            topSceneVoiceSession = false;
+            placeInput.value = ttrim;
             try {
               localStorage.setItem(ACTIVE_PLACE_KEY, placeInput.value);
             } catch (err) {}
+            if (renameFrom) {
+              migrateItemsPlace(renameFrom, ttrim);
+            }
+            save();
+            render();
+            if (renameFrom) {
+              setStatus(
+                "「" + renameFrom + "」を「" + ttrim + "」に書き換えました（下のリストのまとまりも移しました）。",
+                false,
+                4200
+              );
+            } else {
+              setStatus(
+                "「" + ttrim + "」をやりたいことや場所に入れました。買う物を音声で足すときは下のマイクを長押しするか、文字で追加してください。",
+                false,
+                4200
+              );
+            }
+            return;
+          }
+
+          if (intent === "place-capture") {
+            sceneVoiceReplaceCommitted = true;
+            voiceSessionIntent = null;
+            sceneVoiceOldPlace = null;
+            voiceCapturingPlace = false;
+            pendingPlaceRestore = null;
+            topSceneVoiceSession = false;
+            placeInput.value = ttrim;
+            try {
+              localStorage.setItem(ACTIVE_PLACE_KEY, placeInput.value);
+            } catch (err2) {}
+            save();
+            render();
             setStatus(
-              "「" + transcript + "」をシーンに入れました。やることを話すか入力し、「音声で追加」で追加してください。",
+              "「" +
+                ttrim +
+                "」をやりたいことや場所に入れました。買う物を音声で足すときは下のマイクを長押しするか、文字で追加してください。",
               false,
-              4000
+              4200
             );
             return;
           }
-          addFromText(transcript);
+
+          if (intent === "item-add") {
+            voiceSessionIntent = null;
+            sceneVoiceOldPlace = null;
+            voiceCapturingPlace = false;
+            addFromText(ttrim);
+            return;
+          }
+
+          if (voiceCapturingPlace) {
+            sceneVoiceReplaceCommitted = true;
+            var rf =
+              sceneVoiceOldPlace !== null && sceneVoiceOldPlace !== undefined
+                ? String(sceneVoiceOldPlace).trim()
+                : "";
+            sceneVoiceOldPlace = null;
+            voiceCapturingPlace = false;
+            pendingPlaceRestore = null;
+            topSceneVoiceSession = false;
+            placeInput.value = ttrim;
+            try {
+              localStorage.setItem(ACTIVE_PLACE_KEY, placeInput.value);
+            } catch (err3) {}
+            if (rf) {
+              migrateItemsPlace(rf, ttrim);
+            }
+            save();
+            render();
+            if (rf) {
+              setStatus(
+                "「" + rf + "」を「" + ttrim + "」に書き換えました（下のリストのまとまりも移しました）。",
+                false,
+                4200
+              );
+            } else {
+              setStatus(
+                "「" + ttrim + "」をやりたいことや場所に入れました。買う物を音声で足すときは下のマイクを長押しするか、文字で追加してください。",
+                false,
+                4200
+              );
+            }
+            return;
+          }
+
+          addFromText(ttrim);
         };
 
         return true;
       }
 
-      function handleVoiceClick(ev) {
-        var clicked = ev.currentTarget;
+      function stopAnyVoiceListening() {
         var anyListening =
           voiceBtn.classList.contains("listening") || voiceBtn2.classList.contains("listening");
         if (anyListening) {
+          if (bottomVoiceLongPressTimer) {
+            clearTimeout(bottomVoiceLongPressTimer);
+            bottomVoiceLongPressTimer = null;
+          }
           if (recognition) {
             try { recognition.stop(); } catch (err) {}
             setStatus("停止しました", false, 2200);
           }
           setListening(false);
+          return true;
+        }
+        return false;
+      }
+
+      /** 欄を空にしてから場所を聞く（失敗時は pending で復元）。sessionBtn は listening 表示用 */
+      function startSceneVoiceReplaceSession(sessionBtn) {
+        if (sceneVoiceReplaceRestoreTimer) {
+          clearTimeout(sceneVoiceReplaceRestoreTimer);
+          sceneVoiceReplaceRestoreTimer = null;
+        }
+        sceneVoiceReplaceCommitted = false;
+        sceneVoiceOldPlace = placeInput.value;
+        voiceSessionIntent = "scene-replace";
+        topSceneVoiceSession = true;
+        pendingPlaceRestore = placeInput.value;
+        placeInput.value = "";
+        try {
+          placeInput.blur();
+        } catch (eBlur) {}
+        try {
+          localStorage.setItem(ACTIVE_PLACE_KEY, "");
+        } catch (e1) {}
+        voiceCapturingPlace = true;
+        setStatus("欄を空にしました。新しい「やりたいことや場所」を話してください…", false);
+        voiceSessionBtn = sessionBtn;
+        try {
+          recognition.start();
+        } catch (err) {
+          var salvaged = pendingPlaceRestore;
+          pendingPlaceRestore = null;
+          topSceneVoiceSession = false;
+          voiceCapturingPlace = false;
+          sceneVoiceOldPlace = null;
+          voiceSessionIntent = null;
+          voiceSessionBtn = null;
+          if (salvaged !== null && salvaged !== undefined) {
+            placeInput.value = salvaged;
+            try {
+              localStorage.setItem(ACTIVE_PLACE_KEY, placeInput.value);
+            } catch (e2) {}
+          }
+          setListening(false);
+          setStatus("もう一度タップしてください", true);
+        }
+      }
+
+      /** 場所欄の横: 常に「やりたいことや場所」を音声で入れ替え（欄は一旦空→認識失敗時は元に戻す） */
+      function handleVoiceClickTop() {
+        if (stopAnyVoiceListening()) return;
+        if (manualInput.value.trim()) {
+          setStatus(
+            "やることを追加するときは下のマイクを長押しするか、「文字で追加」に入れてからタップで確定してください。",
+            true
+          );
           return;
         }
+        if (!recognition) {
+          setStatus(
+            "このブラウザでは音声は使えません。「やりたいことや場所」はキーボードで入力できます。",
+            true
+          );
+          return;
+        }
+        startSceneVoiceReplaceSession(voiceBtn);
+      }
+
+      /** 下・タップ: 場所が空なら初回の場所認識。場所ありなら上書き用（欄を空→聞く） */
+      function handleVoiceBottomShortTap() {
+        if (stopAnyVoiceListening()) return;
         var typed = manualInput.value.trim();
         if (typed) {
           submitManual();
@@ -1024,25 +1404,195 @@
           );
           return;
         }
-        voiceCapturingPlace = !getActivePlace();
-        if (voiceCapturingPlace) {
-          setStatus("シーン名を認識します。話し始めてください…", false);
+        if (!getActivePlace()) {
+          if (sceneVoiceReplaceRestoreTimer) {
+            clearTimeout(sceneVoiceReplaceRestoreTimer);
+            sceneVoiceReplaceRestoreTimer = null;
+          }
+          sceneVoiceReplaceCommitted = false;
+          sceneVoiceOldPlace = null;
+          voiceSessionIntent = "place-capture";
+          topSceneVoiceSession = false;
+          pendingPlaceRestore = null;
+          voiceCapturingPlace = true;
+          setStatus("「やりたいことや場所」を認識します。話し始めてください…", false);
+          voiceSessionBtn = voiceBtn2;
+          try {
+            recognition.start();
+          } catch (err) {
+            voiceCapturingPlace = false;
+            voiceSessionBtn = null;
+            setListening(false);
+            setStatus("もう一度タップしてください", true);
+          }
         } else {
-          setStatus("「" + getActivePlace() + "」に追加します。話し始めてください…", false);
+          startSceneVoiceReplaceSession(voiceBtn2);
         }
-        voiceSessionBtn = clicked;
+      }
+
+      /** 下・長押し: 場所未設定なら場所認識。設定済みならその場所に買う物を音声追加 */
+      function handleVoiceBottomLongPress() {
+        if (voiceBtn.classList.contains("listening") || voiceBtn2.classList.contains("listening")) {
+          return;
+        }
+        var typed = manualInput.value.trim();
+        if (typed) return;
+        if (!recognition) return;
+        if (sceneVoiceReplaceRestoreTimer) {
+          clearTimeout(sceneVoiceReplaceRestoreTimer);
+          sceneVoiceReplaceRestoreTimer = null;
+        }
+        sceneVoiceReplaceCommitted = false;
+        sceneVoiceOldPlace = null;
+        topSceneVoiceSession = false;
+        pendingPlaceRestore = null;
+        voiceCapturingPlace = !getActivePlace();
+        voiceSessionIntent = voiceCapturingPlace ? "place-capture" : "item-add";
+        if (voiceCapturingPlace) {
+          setStatus("「やりたいことや場所」を認識します（長押し）。話し始めてください…", false);
+        } else {
+          setStatus("「" + getActivePlace() + "」に追加します（長押し）。話し始めてください…", false);
+        }
+        voiceSessionBtn = voiceBtn2;
         try {
           recognition.start();
         } catch (err) {
           voiceCapturingPlace = false;
           voiceSessionBtn = null;
           setListening(false);
-          setStatus("もう一度タップしてください", true);
+          setStatus("もう一度長押ししてください", true);
         }
       }
 
-      voiceBtn.addEventListener("click", handleVoiceClick);
-      voiceBtn2.addEventListener("click", handleVoiceClick);
+      voiceBtn.addEventListener("click", handleVoiceClickTop);
+
+      voiceBtn2.addEventListener("touchstart", function (e) {
+        if (e.touches.length !== 1) return;
+        if (voiceBtn.classList.contains("listening") || voiceBtn2.classList.contains("listening")) {
+          return;
+        }
+        voice2MoveCanceled = false;
+        voice2TouchLongDone = false;
+        voice2TouchStartT = Date.now();
+        voice2TouchStartX = e.touches[0].clientX;
+        voice2TouchStartY = e.touches[0].clientY;
+        if (bottomVoiceLongPressTimer) {
+          clearTimeout(bottomVoiceLongPressTimer);
+          bottomVoiceLongPressTimer = null;
+        }
+        bottomVoiceLongPressTimer = setTimeout(function () {
+          bottomVoiceLongPressTimer = null;
+          voice2TouchLongDone = true;
+          suppressVoiceBtn2Click = true;
+          handleVoiceBottomLongPress();
+        }, BOTTOM_VOICE_LONGPRESS_MS);
+      }, { passive: true });
+
+      voiceBtn2.addEventListener("touchmove", function (e) {
+        if (!bottomVoiceLongPressTimer || e.touches.length !== 1) return;
+        var x = e.touches[0].clientX;
+        var y = e.touches[0].clientY;
+        var dx = x - voice2TouchStartX;
+        var dy = y - voice2TouchStartY;
+        if (dx * dx + dy * dy > longPressMoveThresholdPx * longPressMoveThresholdPx) {
+          voice2MoveCanceled = true;
+          clearTimeout(bottomVoiceLongPressTimer);
+          bottomVoiceLongPressTimer = null;
+        }
+      }, { passive: true });
+
+      voiceBtn2.addEventListener("touchend", function () {
+        if (bottomVoiceLongPressTimer) {
+          clearTimeout(bottomVoiceLongPressTimer);
+          bottomVoiceLongPressTimer = null;
+        }
+        if (voice2TouchLongDone) {
+          voice2TouchLongDone = false;
+          setTimeout(function () {
+            suppressVoiceBtn2Click = false;
+          }, 450);
+          return;
+        }
+        if (voice2MoveCanceled) {
+          voice2MoveCanceled = false;
+          return;
+        }
+        var dt = Date.now() - voice2TouchStartT;
+        if (dt < BOTTOM_VOICE_LONGPRESS_MS) {
+          suppressVoiceBtn2Click = true;
+          handleVoiceBottomShortTap();
+          setTimeout(function () {
+            suppressVoiceBtn2Click = false;
+          }, 450);
+        }
+      }, { passive: true });
+
+      voiceBtn2.addEventListener("touchcancel", function () {
+        if (bottomVoiceLongPressTimer) {
+          clearTimeout(bottomVoiceLongPressTimer);
+          bottomVoiceLongPressTimer = null;
+        }
+        voice2MoveCanceled = false;
+      });
+
+      voiceBtn2.addEventListener("pointerdown", function (e) {
+        if (e.pointerType === "touch") return;
+        if (e.button !== 0) return;
+        if (voiceBtn.classList.contains("listening") || voiceBtn2.classList.contains("listening")) {
+          return;
+        }
+        bottomVoiceLongPressFired = false;
+        bottomVoicePointerDownAt = Date.now();
+        if (bottomVoiceLongPressTimer) {
+          clearTimeout(bottomVoiceLongPressTimer);
+          bottomVoiceLongPressTimer = null;
+        }
+        bottomVoiceLongPressTimer = setTimeout(function () {
+          bottomVoiceLongPressTimer = null;
+          bottomVoiceLongPressFired = true;
+          suppressVoiceBtn2Click = true;
+          handleVoiceBottomLongPress();
+        }, BOTTOM_VOICE_LONGPRESS_MS);
+      });
+
+      voiceBtn2.addEventListener("pointerup", function (e) {
+        if (bottomVoiceLongPressTimer) {
+          clearTimeout(bottomVoiceLongPressTimer);
+          bottomVoiceLongPressTimer = null;
+        }
+        if (bottomVoiceLongPressFired) {
+          bottomVoiceLongPressFired = false;
+          setTimeout(function () {
+            suppressVoiceBtn2Click = false;
+          }, 400);
+          return;
+        }
+        if (e.button !== 0) return;
+        var dt = Date.now() - bottomVoicePointerDownAt;
+        if (dt < BOTTOM_VOICE_LONGPRESS_MS) {
+          suppressVoiceBtn2Click = true;
+          handleVoiceBottomShortTap();
+          setTimeout(function () {
+            suppressVoiceBtn2Click = false;
+          }, 400);
+        }
+      });
+
+      voiceBtn2.addEventListener("pointercancel", function () {
+        if (bottomVoiceLongPressTimer) {
+          clearTimeout(bottomVoiceLongPressTimer);
+          bottomVoiceLongPressTimer = null;
+        }
+      });
+
+      voiceBtn2.addEventListener("click", function (e) {
+        if (suppressVoiceBtn2Click) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        handleVoiceBottomShortTap();
+      });
 
       clearDoneBtn.addEventListener("click", function () {
         items = items.filter(function (i) { return !i.done; });
@@ -1094,10 +1644,10 @@
         unsupportedEl.innerHTML =
           "<strong>音声が使えない理由（iPhone でよくある）</strong><br />" +
           "家の Wi-Fi の <code>http://192.168…</code> のように開いていると、ブラウザが「安全なページ」とみなさず、マイク・音声認識が無効になります。<br /><br />" +
-          "<strong>今すぐ使う：</strong> 「シーン」にキーボードで入力するか、「音声で追加」でシーン名を話してから、「文字で追加」に内容を入れ、もう一度「音声で追加」を押してください（読点「、」で複数まとめて追加できます）。<br /><br />" +
+          "<strong>今すぐ使う：</strong> 「やりたいことや場所」はキーボードで入れるか、タップで音声。買う物は「文字で追加」に入れてタップで確定するか、下のマイクを<strong>長押し</strong>して話してください（読点「、」で複数）。<br /><br />" +
           "<strong>音声も試す：</strong> Mac で <a href=\"https://ngrok.com/\" target=\"_blank\" rel=\"noopener\">ngrok</a> などで HTTPS の URL を作り、その URL を iPhone で開くと、環境によっては音声が使えることがあります。Android の Chrome では、同じ Wi-Fi の <code>http://…</code> でも音声が動くことが多いです。";
-        voiceLabel.textContent = "音声で追加";
-        voiceLabel2.textContent = "音声で追加";
+        voiceLabel.textContent = "シーンを音声";
+        voiceLabel2.textContent = "タップ:場所／長押し:追加";
       }
     })();
   </script>
