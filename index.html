@@ -476,6 +476,27 @@
       background: rgba(77, 182, 200, 0.08);
     }
 
+    .place-delete-btn {
+      flex-shrink: 0;
+      min-width: 56px;
+      min-height: 44px;
+      padding: 0 8px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--danger);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .place-delete-btn:active {
+      background: rgba(196, 92, 74, 0.12);
+    }
+
     .place-chevron {
       flex-shrink: 0;
       display: flex;
@@ -667,6 +688,7 @@
       var STORAGE_KEY = "voice-shopping-list-v1";
       var ACTIVE_PLACE_KEY = "voice-shopping-list-active-place";
       var COLLAPSED_KEY = "voice-shopping-collapsed-places-v1";
+      var SCENES_KEY = "voice-shopping-scenes-v1";
       /** 未分類の表示名（旧ラベルは読み込み時にここへ寄せる） */
       var UNSET_PLACE = "（やりたいこと・場所未設定）";
       var OLD_UNSET_PLACE = "（場所未設定）";
@@ -725,6 +747,7 @@
       /** いま聞き取り中の「音声で追加」ボタン（押した側だけ listening 表示） */
       var voiceSessionBtn = null;
       var items = [];
+      var scenes = [];
       var statusClearTimer = null;
       var suppressToggleUntil = 0;
       /** iOS は微小な touchmove でキャンセルされやすいので、移動閾値と少し長めの待ちを使う */
@@ -787,7 +810,65 @@
             placeInput.value = sp;
           }
         } catch (e2) {}
+        loadScenes();
         loadCollapsed();
+        syncScenes();
+      }
+
+      function loadScenes() {
+        try {
+          var raw = localStorage.getItem(SCENES_KEY);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            scenes = Array.isArray(parsed)
+              ? parsed
+                  .map(function (name) { return String(name || "").trim(); })
+                  .filter(Boolean)
+              : [];
+          } else {
+            scenes = [];
+          }
+        } catch (e) {
+          scenes = [];
+        }
+      }
+
+      function saveScenes() {
+        try {
+          localStorage.setItem(SCENES_KEY, JSON.stringify(scenes));
+        } catch (e) {}
+      }
+
+      function syncScenes() {
+        var seen = {};
+        var next = [];
+        function pushScene(name) {
+          var s = String(name || "").trim();
+          if (!s || seen[s]) return;
+          seen[s] = true;
+          next.push(s);
+        }
+        scenes.forEach(pushScene);
+        items.forEach(function (i) {
+          pushScene((i.place || "").trim() || UNSET_PLACE);
+        });
+        pushScene(getActivePlace());
+        scenes = next;
+        saveScenes();
+      }
+
+      function ensureScene(name) {
+        var s = String(name || "").trim();
+        if (!s) return;
+        if (scenes.indexOf(s) >= 0) return;
+        scenes.push(s);
+        saveScenes();
+      }
+
+      function removeScene(name) {
+        var s = String(name || "").trim();
+        scenes = scenes.filter(function (p) { return p !== s; });
+        saveScenes();
       }
 
       function loadCollapsed() {
@@ -834,16 +915,8 @@
       }
 
       function placesInOrder() {
-        var seen = {};
-        var order = [];
-        items.forEach(function (i) {
-          var p = (i.place || "").trim() || UNSET_PLACE;
-          if (!seen[p]) {
-            seen[p] = true;
-            order.push(p);
-          }
-        });
-        return order;
+        syncScenes();
+        return scenes.slice();
       }
 
       function splitPhrases(text) {
@@ -1042,14 +1115,45 @@
           );
           titleBtn.addEventListener("click", function () {
             placeInput.value = placeName;
+            ensureScene(placeName);
             try {
               localStorage.setItem(ACTIVE_PLACE_KEY, placeInput.value);
             } catch (err) {}
             setStatus("「" + placeName + "」に切り替えました", false, 3200);
           });
 
+          var deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.className = "place-delete-btn";
+          deleteBtn.textContent = "削除";
+          deleteBtn.setAttribute("aria-label", "シーン「" + placeName + "」を削除");
+          deleteBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            var ok = window.confirm("シーン「" + placeName + "」と項目を削除します。よろしいですか？");
+            if (!ok) return;
+            var removed = 0;
+            items = items.filter(function (i) {
+              var p = (i.place || "").trim() || UNSET_PLACE;
+              if (p === placeName) {
+                removed++;
+                return false;
+              }
+              return true;
+            });
+            delete collapsedPlaces[placeName];
+            removeScene(placeName);
+            if (getActivePlace() === placeName) {
+              placeInput.value = scenes[0] || "";
+            }
+            saveCollapsed();
+            save();
+            render();
+            setStatus("シーン「" + placeName + "」を削除しました（" + removed + "件）", false, 3200);
+          });
+
           headRow.appendChild(chevronBtn);
           headRow.appendChild(titleBtn);
+          headRow.appendChild(deleteBtn);
 
           var ul = document.createElement("ul");
           ul.className = "place-items";
@@ -1100,6 +1204,7 @@
         parts.forEach(function (p) {
           items.push({ id: uid(), text: p, done: false, place: place });
         });
+        ensureScene(place);
         save();
         render();
         scrollListIntoViewSoft();
@@ -1448,6 +1553,7 @@
         setStatus("完了した項目を削除しました", false, 2800);
       });
 
+
       manualInput.addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -1460,6 +1566,7 @@
       });
 
       placeInput.addEventListener("blur", function () {
+        ensureScene(placeInput.value);
         try {
           localStorage.setItem(ACTIVE_PLACE_KEY, placeInput.value);
         } catch (e) {}
