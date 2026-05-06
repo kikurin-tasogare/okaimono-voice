@@ -478,23 +478,145 @@
 
     .place-delete-btn {
       flex-shrink: 0;
-      min-width: 56px;
+      min-width: 118px;
       min-height: 44px;
-      padding: 0 8px;
+      padding: 0 6px;
       border: none;
-      border-radius: 10px;
+      border-radius: 999px;
       background: transparent;
-      color: var(--danger);
-      font-size: 0.82rem;
+      color: #7a5137;
+      font-size: 0.8rem;
       font-weight: 700;
       letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       cursor: pointer;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
 
     .place-delete-btn:active {
-      background: rgba(196, 92, 74, 0.12);
+      transform: scale(0.97);
+      background: rgba(122, 81, 55, 0.08);
+    }
+
+    .place-delete-icon {
+      width: 34px;
+      height: 30px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .hippo-face {
+      position: relative;
+      width: 34px;
+      height: 28px;
+      border-radius: 16px 16px 14px 14px;
+      background: #8f7768;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    .hippo-face::before,
+    .hippo-face::after {
+      content: "";
+      position: absolute;
+      top: -4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #8f7768;
+    }
+
+    .hippo-face::before {
+      left: 6px;
+    }
+
+    .hippo-face::after {
+      right: 6px;
+    }
+
+    .hippo-eyes {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 18px;
+      height: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .hippo-eyes::before,
+    .hippo-eyes::after {
+      content: "";
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #3a2a20;
+    }
+
+    .hippo-mouth {
+      position: absolute;
+      left: 6px;
+      bottom: 4px;
+      width: 22px;
+      height: 11px;
+      border-radius: 11px;
+      background: #b89686;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .hippo-mouth::before,
+    .hippo-mouth::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #7a5a49;
+    }
+
+    .hippo-mouth::before {
+      left: 6px;
+    }
+
+    .hippo-mouth::after {
+      right: 6px;
+    }
+
+    .place-delete-label {
+      white-space: nowrap;
+      font-size: 0.77rem;
+      color: #7a5137;
+    }
+
+    .place-delete-btn.show-label .place-delete-label {
+      display: inline;
+    }
+
+    @media (max-width: 640px) {
+      .place-delete-btn {
+        min-width: 46px;
+        width: 46px;
+        padding: 0;
+        border-radius: 14px;
+      }
+
+      .place-delete-btn .place-delete-label {
+        display: none;
+      }
+
+      .place-delete-btn.show-label {
+        width: auto;
+        min-width: 108px;
+        padding: 0 10px;
+        border-radius: 999px;
+      }
     }
 
     .place-chevron {
@@ -750,6 +872,7 @@
       var scenes = [];
       var statusClearTimer = null;
       var suppressToggleUntil = 0;
+      var compactDeleteMedia = window.matchMedia ? window.matchMedia("(max-width: 640px)") : null;
       /** iOS は微小な touchmove でキャンセルされやすいので、移動閾値と少し長めの待ちを使う */
       var longPressDelay = 620;
       var longPressMoveThresholdPx = 14;
@@ -928,6 +1051,10 @@
 
       function uid() {
         return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      }
+
+      function isCompactDeleteButtonMode() {
+        return !!(compactDeleteMedia && compactDeleteMedia.matches);
       }
 
       function closeEditModal() {
@@ -1125,11 +1252,22 @@
           var deleteBtn = document.createElement("button");
           deleteBtn.type = "button";
           deleteBtn.className = "place-delete-btn";
-          deleteBtn.textContent = "削除";
+          deleteBtn.innerHTML =
+            '<span class="place-delete-icon" aria-hidden="true">' +
+            '<span class="hippo-face"><span class="hippo-eyes"></span><span class="hippo-mouth"></span></span>' +
+            '</span>' +
+            '<span class="place-delete-label">おかたづけ</span>';
           deleteBtn.setAttribute("aria-label", "シーン「" + placeName + "」を削除");
           deleteBtn.addEventListener("click", function (e) {
             e.stopPropagation();
-            var ok = window.confirm("シーン「" + placeName + "」と項目を削除します。よろしいですか？");
+            if (isCompactDeleteButtonMode() && !deleteBtn.classList.contains("show-label")) {
+              deleteBtn.classList.add("show-label");
+              window.setTimeout(function () {
+                deleteBtn.classList.remove("show-label");
+              }, 1800);
+              return;
+            }
+            var ok = window.confirm("カバさんがおかたづけしていい？");
             if (!ok) return;
             var removed = 0;
             items = items.filter(function (i) {
@@ -1148,7 +1286,7 @@
             saveCollapsed();
             save();
             render();
-            setStatus("シーン「" + placeName + "」を削除しました（" + removed + "件）", false, 3200);
+            setStatus("カバさんがおかたづけしました（" + removed + "件）", false, 3200);
           });
 
           headRow.appendChild(chevronBtn);
