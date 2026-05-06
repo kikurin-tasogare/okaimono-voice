@@ -1258,17 +1258,33 @@
             '</span>' +
             '<span class="place-delete-label">おかたづけ</span>';
           deleteBtn.setAttribute("aria-label", "シーン「" + placeName + "」を削除");
+          var deleteArmTimer = null;
           deleteBtn.addEventListener("click", function (e) {
             e.stopPropagation();
-            if (isCompactDeleteButtonMode() && !deleteBtn.classList.contains("show-label")) {
+            if (!deleteBtn.classList.contains("show-label")) {
               deleteBtn.classList.add("show-label");
-              window.setTimeout(function () {
-                deleteBtn.classList.remove("show-label");
+            }
+            if (!deleteBtn.classList.contains("armed")) {
+              deleteBtn.classList.add("armed");
+              if (deleteArmTimer) window.clearTimeout(deleteArmTimer);
+              deleteArmTimer = window.setTimeout(function () {
+                deleteBtn.classList.remove("armed");
+                if (isCompactDeleteButtonMode()) {
+                  deleteBtn.classList.remove("show-label");
+                }
+                deleteArmTimer = null;
               }, 1800);
+              setStatus("もう一度タップでおかたづけ", false, 1400);
               return;
             }
-            var ok = window.confirm("カバさんがおかたづけしていい？");
-            if (!ok) return;
+            if (deleteArmTimer) {
+              window.clearTimeout(deleteArmTimer);
+              deleteArmTimer = null;
+            }
+            deleteBtn.classList.remove("armed");
+            if (isCompactDeleteButtonMode()) {
+              deleteBtn.classList.remove("show-label");
+            }
             var removed = 0;
             items = items.filter(function (i) {
               var p = (i.place || "").trim() || UNSET_PLACE;
